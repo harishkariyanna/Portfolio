@@ -1,0 +1,42 @@
+{
+  "name": "intelligent-portfolio-platform",
+  "version": "1.0.0",
+  "description": "AI-Powered Dynamic Portfolio Platform with MERN Stack",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "start:backend": "cd backend && npm start",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "portfolio",
+    "mern",
+    "ai",
+    "chatbot",
+    "rag"
+  ],
+  "author": "Portfolio Owner",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "standard-version": "9.5"
+  }
+}
