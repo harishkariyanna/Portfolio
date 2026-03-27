@@ -47,6 +47,11 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
       ip: req.ip
     });
 
+    // Send acknowledgment email to the user (don't wait for it)
+    emailService.sendContactAcknowledgment(email, name).catch(err => {
+      logger.error('Failed to send acknowledgment email', { correlationId, error: err.message });
+    });
+
     logger.info('Contact form submitted', { correlationId, from: email, subject: subject || 'No Subject' });
     res.status(201).json({ message: 'Thank you for your message! I will get back to you soon.', id: contact._id });
   } catch (error) {

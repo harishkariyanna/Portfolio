@@ -113,6 +113,35 @@ class EmailService {
       throw new Error('Failed to send reply email');
     }
   }
+
+  async sendContactAcknowledgment(toEmail, toName) {
+    const mailOptions = {
+      from: this.from,
+      to: toEmail,
+      subject: 'Thank you for contacting me',
+      text: `Hi ${toName},\n\nThank you for reaching out! I have received your message and will get back to you as soon as possible.\n\nBest regards`
+    };
+
+    if (!this.transporter) {
+      logger.info(`[EMAIL NOT CONFIGURED] Would send acknowledgment to ${toEmail}`);
+      console.log(`\n========== ACKNOWLEDGMENT EMAIL ==========`);
+      console.log(`To: ${toEmail}`);
+      console.log(`Subject: ${mailOptions.subject}`);
+      console.log(`Body: ${mailOptions.text}`);
+      console.log(`==========================================\n`);
+      return { success: true, message: 'Acknowledgment logged (email not configured)' };
+    }
+
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      logger.info(`Acknowledgment sent to ${toEmail}:`, info.messageId);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      logger.error(`Failed to send acknowledgment to ${toEmail}:`, error);
+      // Don't throw error - acknowledgment email is optional
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 module.exports = new EmailService();
