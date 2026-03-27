@@ -74,19 +74,17 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
       ip: req.ip
     });
 
-    // Send acknowledgment email to the user (fire-and-forget with timeout)
-    const emailTimeout = setTimeout(() => {
-      logger.warn('Acknowledgment email timed out', { correlationId, to: email });
-    }, 15000);
-
+    // Send acknowledgment email (properly awaited, non-blocking to response)
     emailService.sendContactAcknowledgment(email, name)
-      .then(() => {
-        clearTimeout(emailTimeout);
-        logger.info('Acknowledgment email sent', { correlationId, to: email });
+      .then((result) => {
+        if (result.success && result.messageId) {
+          logger.info('Acknowledgment email DELIVERED', { correlationId, to: email, messageId: result.messageId });
+        } else {
+          logger.warn('Acknowledgment email failed silently', { correlationId, to: email, error: result.error });
+        }
       })
       .catch(err => {
-        clearTimeout(emailTimeout);
-        logger.error('Failed to send acknowledgment email', { correlationId, error: err.message });
+        logger.error('Acknowledgment email FAILED', { correlationId, to: email, error: err.message });
       });
 
     logger.info('Contact form submitted', { correlationId, from: email, subject: subject || 'No Subject' });
@@ -138,19 +136,13 @@ router.post('/admin/:id/reply', authMiddleware, validate(replySchema), async (re
     contact.read = true;
     await contact.save();
 
-    // Send email asynchronously (don't block response)
-    const emailTimeout = setTimeout(() => {
-      logger.warn('Reply email timed out', { correlationId, to: contact.email });
-    }, 15000);
-
+    // Send reply email (properly awaited, non-blocking to response)
     emailService.sendReply(contact.email, contact.name, contact.subject, replyMessage)
-      .then(() => {
-        clearTimeout(emailTimeout);
-        logger.info('Reply email sent successfully', { correlationId, to: contact.email });
+      .then((result) => {
+        logger.info('Reply email DELIVERED', { correlationId, to: contact.email, messageId: result.messageId });
       })
       .catch(err => {
-        clearTimeout(emailTimeout);
-        logger.error('Failed to send reply email', { correlationId, error: err.message });
+        logger.error('Reply email FAILED', { correlationId, to: contact.email, error: err.message });
       });
 
     logger.info('Reply queued', { to: contact.email, subject: contact.subject });
