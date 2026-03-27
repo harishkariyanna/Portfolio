@@ -29,6 +29,7 @@ class EmailService {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
         },
+        family: 4, // Force IPv4 (Render doesn't support IPv6 for Gmail)
         connectionTimeout: 10000,
         greetingTimeout: 5000,
         socketTimeout: 10000
