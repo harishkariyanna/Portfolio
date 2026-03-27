@@ -22,7 +22,7 @@ const contactLimiter = rateLimit({
 const contactSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().required(),
-  subject: Joi.string().max(200).optional(),
+  subject: Joi.string().max(200).allow('', null).optional(),
   message: Joi.string().min(10).max(2000).required()
 });
 
@@ -55,7 +55,7 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
     logger.info('Contact form submitted', { correlationId, from: email, subject: subject || 'No Subject' });
     res.status(201).json({ message: 'Thank you for your message! I will get back to you soon.', id: contact._id });
   } catch (error) {
-    logger.error('Contact form error', { correlationId, error: error.message });
+    logger.error('Contact form error', { correlationId, error: error.message, stack: error.stack });
     res.status(500).json({ error: 'Failed to submit contact form' });
   }
 });
