@@ -47,10 +47,20 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
       ip: req.ip
     });
 
-    // Send acknowledgment email to the user (don't wait for it)
-    emailService.sendContactAcknowledgment(email, name).catch(err => {
-      logger.error('Failed to send acknowledgment email', { correlationId, error: err.message });
-    });
+    // Send acknowledgment email to the user (fire-and-forget with timeout)
+    const emailTimeout = setTimeout(() => {
+      logger.warn('Acknowledgment email timed out', { correlationId, to: email });
+    }, 5000);
+
+    emailService.sendContactAcknowledgment(email, name)
+      .then(() => {
+        clearTimeout(emailTimeout);
+        logger.info('Acknowledgment email sent', { correlationId, to: email });
+      })
+      .catch(err => {
+        clearTimeout(emailTimeout);
+        logger.error('Failed to send acknowledgment email', { correlationId, error: err.message });
+      });
 
     logger.info('Contact form submitted', { correlationId, from: email, subject: subject || 'No Subject' });
     res.status(201).json({ message: 'Thank you for your message! I will get back to you soon.', id: contact._id });
@@ -87,20 +97,36 @@ router.patch('/admin/:id/read', authMiddleware, async (req, res) => {
 // POST /api/contact/admin/:id/reply - Reply to a contact message via email
 router.post('/admin/:id/reply', authMiddleware, validate(replySchema), async (req, res) => {
   const logger = res.locals.logger;
+  const correlationId = res.locals.correlationId;
+  
   try {
     const contact = await Contact.findById(req.params.id);
     if (!contact) return res.status(404).json({ error: 'Contact not found' });
 
     const { replyMessage } = req.body;
 
-    await emailService.sendReply(contact.email, contact.name, contact.subject, replyMessage);
-
+    // Update contact status immediately
     contact.replied = true;
     contact.repliedAt = new Date();
     contact.read = true;
     await contact.save();
 
-    logger.info('Reply sent', { to: contact.email, subject: contact.subject });
+    // Send email asynchronously (don't block response)
+    const emailTimeout = setTimeout(() => {
+      logger.warn('Reply email timed out', { correlationId, to: contact.email });
+    }, 5000);
+
+    emailService.sendReply(contact.email, contact.name, contact.subject, replyMessage)
+      .then(() => {
+        clearTimeout(emailTimeout);
+        logger.info('Reply email sent successfully', { correlationId, to: contact.email });
+      })
+      .catch(err => {
+        clearTimeout(emailTimeout);
+        logger.error('Failed to send reply email', { correlationId, error: err.message });
+      });
+
+    logger.info('Reply queued', { to: contact.email, subject: contact.subject });
     res.json({ message: 'Reply sent successfully', contact });
   } catch (error) {
     logger.error('Reply error', { error: error.message });
