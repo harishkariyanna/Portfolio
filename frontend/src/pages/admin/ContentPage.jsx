@@ -90,6 +90,7 @@ const ENTITIES = {
       { name: 'resumeUrl', label: 'Resume URL', type: 'url' },
       { name: 'socialLinks', label: 'Social Links', type: 'social-links' },
       { name: 'typingTaglines', label: 'Typing Taglines (comma-separated)', type: 'taglines' },
+      { name: 'footerText', label: 'Footer Text (use {year} for current year)', type: 'text' },
     ],
     columns: ['headline', 'location', 'email'],
   },

@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiGrid, FiFolder, FiBarChart2, FiFileText, FiMail, FiUser, FiLogOut, FiLayers } from 'react-icons/fi';
+import { FiGrid, FiFolder, FiBarChart2, FiFileText, FiMail, FiUser, FiLogOut, FiLayers, FiMenu, FiX } from 'react-icons/fi';
 
 export default function AdminLayout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/admin/login');
+    navigate('/');
   };
 
   const links = [
@@ -23,18 +25,38 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <h2 className="admin-logo">Admin Panel</h2>
-        <nav className="admin-nav">
+      {/* Mobile hamburger */}
+      <button className="sidebar-mobile-toggle admin-mobile-toggle" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+        {mobileOpen ? <FiX /> : <FiMenu />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
+
+      <aside className={`sidebar admin-sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-brand">
+          <span className="sidebar-logo">A</span>
+        </div>
+        <nav className="sidebar-links">
           {links.map(({ to, label, icon }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
-              {icon} <span>{label}</span>
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={() => setMobileOpen(false)}
+              title={label}
+            >
+              <span className="sidebar-icon">{icon}</span>
+              <span className="sidebar-label">{label}</span>
             </NavLink>
           ))}
         </nav>
-        <button onClick={handleLogout} className="admin-logout-btn">
-          <FiLogOut /> Logout
-        </button>
+        <div className="sidebar-bottom">
+          <button onClick={handleLogout} className="sidebar-link logout-btn" title="Logout">
+            <span className="sidebar-icon"><FiLogOut /></span>
+            <span className="sidebar-label">Logout</span>
+          </button>
+        </div>
       </aside>
       <main className="admin-main">
         <Outlet />

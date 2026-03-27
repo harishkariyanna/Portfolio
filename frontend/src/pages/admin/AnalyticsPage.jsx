@@ -8,12 +8,25 @@ export default function AnalyticsPage() {
   useEffect(() => {
     getAnalyticsSummary()
       .then(r => setStats(r.data))
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to load analytics:', err);
+        setStats(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading">Loading analytics...</div>;
-  if (!stats) return <div className="empty-state">No analytics data available.</div>;
+  if (!stats || stats.totalViews === 0) return (
+    <div className="analytics-page">
+      <h1>Analytics</h1>
+      <div className="empty-state">
+        <p>No analytics data available yet.</p>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+          Visitor analytics will appear here once people start browsing your portfolio.
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="analytics-page">

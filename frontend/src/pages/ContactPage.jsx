@@ -18,7 +18,9 @@ export default function ContactPage() {
       setStatus({ type: 'success', msg: 'Message sent successfully!' });
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      setStatus({ type: 'error', msg: err.response?.data?.error || 'Failed to send message' });
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to send message';
+      setStatus({ type: 'error', msg: errorMsg });
+      console.error('Contact form error:', err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -40,12 +42,12 @@ export default function ContactPage() {
             <input id="email" name="email" type="email" value={form.email} onChange={handleChange} required />
           </div>
           <div className="form-group">
-            <label htmlFor="subject">Subject</label>
-            <input id="subject" name="subject" value={form.subject} onChange={handleChange} required maxLength={200} />
+            <label htmlFor="subject">Subject (Optional)</label>
+            <input id="subject" name="subject" value={form.subject} onChange={handleChange} maxLength={200} />
           </div>
           <div className="form-group">
-            <label htmlFor="message">Message</label>
-            <textarea id="message" name="message" value={form.message} onChange={handleChange} required rows={6} maxLength={2000} />
+            <label htmlFor="message">Message (minimum 10 characters)</label>
+            <textarea id="message" name="message" value={form.message} onChange={handleChange} required minLength={10} rows={6} maxLength={2000} />
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Sending...' : 'Send Message'}

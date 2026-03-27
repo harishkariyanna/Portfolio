@@ -85,6 +85,34 @@ class EmailService {
     }
     return otp;
   }
+
+  async sendReply(toEmail, toName, originalSubject, replyMessage) {
+    const mailOptions = {
+      from: this.from,
+      to: toEmail,
+      subject: `Re: ${originalSubject}`,
+      text: `Hi ${toName},\n\n${replyMessage}\n\nBest regards`
+    };
+
+    if (!this.transporter) {
+      logger.info(`[EMAIL NOT CONFIGURED] Would send reply to ${toEmail}`);
+      console.log(`\n========== REPLY EMAIL ==========`);
+      console.log(`To: ${toEmail}`);
+      console.log(`Subject: ${mailOptions.subject}`);
+      console.log(`Body: ${mailOptions.text}`);
+      console.log(`==================================\n`);
+      return { success: true, message: 'Reply logged (email not configured)' };
+    }
+
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      logger.info(`Reply sent to ${toEmail}:`, info.messageId);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      logger.error(`Failed to send reply to ${toEmail}:`, error);
+      throw new Error('Failed to send reply email');
+    }
+  }
 }
 
 module.exports = new EmailService();

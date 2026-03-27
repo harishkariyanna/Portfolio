@@ -6,7 +6,7 @@ import { aboutApi, skillsApi, experiencesApi, educationApi } from '../services/a
 import ProjectCard from '../components/ProjectCard';
 import SkillsMarquee from '../components/SkillsMarquee';
 import ResumeDownloadModal from '../components/ResumeDownloadModal';
-import { FiArrowRight, FiDownload } from 'react-icons/fi';
+import { FiArrowRight, FiDownload, FiMapPin } from 'react-icons/fi';
 import { FaGithub, FaLinkedin, FaTwitter, FaFacebook, FaInstagram, FaYoutube, FaMedium, FaDev, FaStackOverflow, FaBehance, FaDribbble, FaGlobe } from 'react-icons/fa';
 
 export default function HomePage() {
@@ -85,6 +85,9 @@ export default function HomePage() {
             <p className="hero-subtitle">
               {about?.bio || 'Full-Stack Developer & AI Enthusiast'}
             </p>
+            {about?.location && (
+              <p className="hero-location"><FiMapPin /> {about.location}</p>
+            )}
             {about?.typingTaglines?.length > 0 && (
               <TypingTagline taglines={about.typingTaglines} />
             )}

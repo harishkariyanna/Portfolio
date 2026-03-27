@@ -11,7 +11,8 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await getMe();
       setAdmin(data.admin);
-    } catch {
+    } catch (error) {
+      // Silently handle - user is just not logged in
       setAdmin(null);
     } finally {
       setLoading(false);

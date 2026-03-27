@@ -30,19 +30,17 @@ function App() {
           <Router>
             <FloatingTech />
             <div className="App">
-              <Navbar />
-              <main>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/projects" element={<ProjectsPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
+              <Routes>
+                {/* Public Routes with Sidebar */}
+                <Route path="/" element={<><Navbar /><main className="main-content"><HomePage /></main><Footer /></>} />
+                <Route path="/projects" element={<><Navbar /><main className="main-content"><ProjectsPage /></main><Footer /></>} />
+                <Route path="/contact" element={<><Navbar /><main className="main-content"><ContactPage /></main><Footer /></>} />
 
-                {/* Auth */}
-                <Route path="/admin/login" element={<LoginPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                {/* Auth Pages (No Sidebar) */}
+                <Route path="/admin/login" element={<main><LoginPage /></main>} />
+                <Route path="/forgot-password" element={<main><ForgotPasswordPage /></main>} />
 
-                {/* Admin Routes */}
+                {/* Admin Routes (AdminLayout has own sidebar) */}
                 <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="projects" element={<AdminProjectsPage />} />
@@ -53,12 +51,10 @@ function App() {
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>
               </Routes>
-            </main>
-            <Footer />
-            <ChatbotWidget />
-          </div>
-        </Router>
-      </AuthProvider>
+              <ChatbotWidget />
+            </div>
+          </Router>
+        </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>
   )

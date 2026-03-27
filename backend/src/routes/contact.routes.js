@@ -3,6 +3,9 @@ const Joi = require('joi');
 const rateLimit = require('express-rate-limit');
 const { validate } = require('../middleware/validation.middleware');
 const { sanitizeHtml } = require('../middleware/sanitize.middleware');
+const Contact = require('../models/Contact.model');
+const emailService = require('../services/email.service');
+const authMiddleware = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
@@ -15,7 +18,7 @@ const contactLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Validation schema
+// Validation schemas
 const contactSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().required(),
@@ -23,8 +26,9 @@ const contactSchema = Joi.object({
   message: Joi.string().min(10).max(2000).required()
 });
 
-// In-memory store for contact messages (in production, use a database or email service)
-const contactMessages = [];
+const replySchema = Joi.object({
+  replyMessage: Joi.string().min(1).max(5000).required()
+});
 
 // POST /api/contact - Public: Submit contact form
 router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
@@ -33,42 +37,80 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
 
   try {
     const { name, email, subject, message } = req.body;
-
-    // Sanitize message content
     const sanitizedMessage = sanitizeHtml(message);
 
-    const contactEntry = {
-      id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+    const contact = await Contact.create({
       name,
       email,
       subject: subject || 'No Subject',
       message: sanitizedMessage,
-      ip: req.ip,
-      createdAt: new Date().toISOString(),
-      read: false
-    };
-
-    contactMessages.push(contactEntry);
-
-    logger.info('Contact form submitted', {
-      correlationId,
-      from: email,
-      subject: subject || 'No Subject'
+      ip: req.ip
     });
 
-    res.status(201).json({
-      message: 'Thank you for your message! I will get back to you soon.',
-      id: contactEntry.id
-    });
+    logger.info('Contact form submitted', { correlationId, from: email, subject: subject || 'No Subject' });
+    res.status(201).json({ message: 'Thank you for your message! I will get back to you soon.', id: contact._id });
   } catch (error) {
     logger.error('Contact form error', { correlationId, error: error.message });
     res.status(500).json({ error: 'Failed to submit contact form' });
   }
 });
 
-// GET /api/admin/contact - Admin: Get all contact messages
-router.get('/admin', require('../middleware/auth.middleware'), async (req, res) => {
-  res.json({ messages: contactMessages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) });
+// GET /api/contact/admin - Admin: Get all contact messages
+router.get('/admin', authMiddleware, async (req, res) => {
+  try {
+    const messages = await Contact.find().sort({ createdAt: -1 });
+    res.json({ messages });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch contacts' });
+  }
+});
+
+// PATCH /api/contact/admin/:id/read - Toggle read status
+router.patch('/admin/:id/read', authMiddleware, async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) return res.status(404).json({ error: 'Contact not found' });
+
+    contact.read = !contact.read;
+    await contact.save();
+    res.json(contact);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update read status' });
+  }
+});
+
+// POST /api/contact/admin/:id/reply - Reply to a contact message via email
+router.post('/admin/:id/reply', authMiddleware, validate(replySchema), async (req, res) => {
+  const logger = res.locals.logger;
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) return res.status(404).json({ error: 'Contact not found' });
+
+    const { replyMessage } = req.body;
+
+    await emailService.sendReply(contact.email, contact.name, contact.subject, replyMessage);
+
+    contact.replied = true;
+    contact.repliedAt = new Date();
+    contact.read = true;
+    await contact.save();
+
+    logger.info('Reply sent', { to: contact.email, subject: contact.subject });
+    res.json({ message: 'Reply sent successfully', contact });
+  } catch (error) {
+    logger.error('Reply error', { error: error.message });
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
+// DELETE /api/contact/admin/:id - Delete a contact message
+router.delete('/admin/:id', authMiddleware, async (req, res) => {
+  try {
+    await Contact.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Contact deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete contact' });
+  }
 });
 
 module.exports = router;

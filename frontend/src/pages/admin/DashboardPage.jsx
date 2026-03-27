@@ -8,11 +8,25 @@ export default function DashboardPage() {
   useEffect(() => {
     getAnalyticsSummary()
       .then(r => setStats(r.data))
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Failed to load analytics:', err);
+        setStats(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading">Loading dashboard...</div>;
+  if (!stats) return (
+    <div className="dashboard">
+      <h1>Dashboard</h1>
+      <div className="empty-state">
+        <p>No analytics data available yet.</p>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+          Analytics will appear here once visitors start browsing your portfolio.
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="dashboard">

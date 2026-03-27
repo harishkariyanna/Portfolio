@@ -60,6 +60,11 @@ const aboutMeSchema = new mongoose.Schema({
     }
   }],
   typingTaglines: [{ type: String, maxlength: 100 }],
+  footerText: { 
+    type: String, 
+    maxlength: 200,
+    default: '© {year} Portfolio Platform. Built with MERN + AI.' 
+  },
   deleted: { type: Boolean, default: false }
 }, { timestamps: true });
 

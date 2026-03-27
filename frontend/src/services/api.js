@@ -11,8 +11,13 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Suppress console error for expected 401 on auth check
     if (error.response?.status === 401) {
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      // Don't log expected auth checks
+      if (error.config?.url?.includes('/auth/me')) {
+        return Promise.reject({ ...error, silent: true });
+      }
     }
     return Promise.reject(error);
   }
@@ -82,6 +87,9 @@ export const generateRoleResume = (role, customRole) => api.post('/api/resume/ge
 // Contact
 export const submitContact = (data) => api.post('/api/contact', data);
 export const getContacts = () => api.get('/api/contact/admin');
+export const toggleContactRead = (id) => api.patch(`/api/contact/admin/${id}/read`);
+export const replyContact = (id, replyMessage) => api.post(`/api/contact/admin/${id}/reply`, { replyMessage });
+export const deleteContact = (id) => api.delete(`/api/contact/admin/${id}`);
 
 // LinkedIn Integration
 export const getLinkedInAuthUrl = () => api.get('/api/linkedin/auth');
