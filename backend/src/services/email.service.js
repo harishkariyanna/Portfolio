@@ -112,7 +112,13 @@ class EmailService {
       logger.info(`Reply sent to ${toEmail}:`, info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      logger.error(`Failed to send reply to ${toEmail}:`, error);
+      logger.error(`Failed to send reply to ${toEmail}:`, {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       throw new Error('Failed to send reply email');
     }
   }
@@ -140,7 +146,13 @@ class EmailService {
       logger.info(`Acknowledgment sent to ${toEmail}:`, info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      logger.error(`Failed to send acknowledgment to ${toEmail}:`, error);
+      logger.error(`Failed to send acknowledgment to ${toEmail}:`, {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
       // Don't throw error - acknowledgment email is optional
       return { success: false, error: error.message };
     }

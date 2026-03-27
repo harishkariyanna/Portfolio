@@ -9,6 +9,33 @@ const authMiddleware = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
+// Admin test endpoint - verify email configuration
+router.post('/admin/test-email', authMiddleware, async (req, res) => {
+  const logger = res.locals.logger;
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email address required' });
+  }
+
+  try {
+    const result = await emailService.sendContactAcknowledgment(email, 'Test User');
+    logger.info('Test email sent', { to: email, result });
+    res.json({ 
+      message: 'Test email sent successfully',
+      configured: !!emailService.transporter,
+      result
+    });
+  } catch (error) {
+    logger.error('Test email failed', { error: error.message, stack: error.stack });
+    res.status(500).json({ 
+      error: 'Failed to send test email', 
+      details: error.message,
+      configured: !!emailService.transporter
+    });
+  }
+});
+
 // Rate limit: 3 contact submissions per hour per IP
 const contactLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
