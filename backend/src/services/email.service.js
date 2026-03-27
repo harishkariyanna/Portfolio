@@ -1,7 +1,11 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const dotenv = require('dotenv');
 const path = require('path');
 const { logger } = require('../middleware/logger.middleware');
+
+// Force DNS to resolve IPv4 first — prevents ENETUNREACH on IPv6-only addresses
+dns.setDefaultResultOrder('ipv4first');
 
 // Load environment variables early
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
@@ -29,10 +33,11 @@ class EmailService {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
         },
-        family: 4, // Force IPv4 (Render doesn't support IPv6 for Gmail)
-        connectionTimeout: 10000,
-        greetingTimeout: 5000,
-        socketTimeout: 10000
+        family: 4, // Force IPv4 only
+        connectionTimeout: 15000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+        tls: { rejectUnauthorized: false }
       });
       logger.info('Email transporter initialized successfully');
     } catch (error) {

@@ -77,7 +77,7 @@ router.post('/', contactLimiter, validate(contactSchema), async (req, res) => {
     // Send acknowledgment email to the user (fire-and-forget with timeout)
     const emailTimeout = setTimeout(() => {
       logger.warn('Acknowledgment email timed out', { correlationId, to: email });
-    }, 5000);
+    }, 15000);
 
     emailService.sendContactAcknowledgment(email, name)
       .then(() => {
@@ -141,7 +141,7 @@ router.post('/admin/:id/reply', authMiddleware, validate(replySchema), async (re
     // Send email asynchronously (don't block response)
     const emailTimeout = setTimeout(() => {
       logger.warn('Reply email timed out', { correlationId, to: contact.email });
-    }, 5000);
+    }, 15000);
 
     emailService.sendReply(contact.email, contact.name, contact.subject, replyMessage)
       .then(() => {
